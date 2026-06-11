@@ -8,8 +8,22 @@ cd "$(dirname "$0")"
 REPO_NAME="explore-music-space"
 
 if ! command -v gh &>/dev/null; then
-  echo "请先安装 GitHub CLI: https://cli.github.com/"
-  echo "macOS 安装: brew install gh"
+  echo "未检测到 GitHub CLI (gh)。可选方案："
+  echo ""
+  echo "【方案 1】安装 gh 后重新运行本脚本"
+  echo "  brew install gh"
+  echo "  gh auth login"
+  echo "  bash deploy.sh"
+  echo ""
+  echo "【方案 2】手动部署"
+  echo "  1. 打开 https://github.com/new 创建公开仓库 explore-music-space"
+  echo "  2. 不要勾选 Add a README"
+  echo "  3. 在终端执行（把 YOUR_USERNAME 换成你的 GitHub 用户名）："
+  echo "     cd $(pwd)"
+  echo "     git remote add origin https://github.com/YOUR_USERNAME/explore-music-space.git"
+  echo "     git push -u origin main"
+  echo "  4. 仓库 Settings → Pages → Build and deployment → Source 选 GitHub Actions"
+  echo "  5. 等待 Actions 跑完，访问 https://YOUR_USERNAME.github.io/explore-music-space/"
   exit 1
 fi
 
