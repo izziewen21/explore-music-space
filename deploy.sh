@@ -22,8 +22,9 @@ if ! command -v gh &>/dev/null; then
   echo "     cd $(pwd)"
   echo "     git remote add origin https://github.com/YOUR_USERNAME/explore-music-space.git"
   echo "     git push -u origin main"
-  echo "  4. 仓库 Settings → Pages → Build and deployment → Source 选 GitHub Actions"
-  echo "  5. 等待 Actions 跑完，访问 https://YOUR_USERNAME.github.io/explore-music-space/"
+  echo "  4. 仓库 Settings → Pages → Source 选 Deploy from a branch"
+  echo "     Branch: main  /  Folder: / (root)  → Save"
+  echo "  5. 等待 1-2 分钟，访问 https://YOUR_USERNAME.github.io/explore-music-space/"
   exit 1
 fi
 
