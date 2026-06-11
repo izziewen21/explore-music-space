@@ -38,7 +38,32 @@
         }
         .ui-layer.active { opacity: 1; transform: scale(1); pointer-events: auto; }
         .ui-layer.spirit-ui { pointer-events: none; background: transparent; }
-        .ui-layer.spirit-ui .spirit-controls { pointer-events: auto; }
+        .ui-layer.spirit-ui .spirit-top,
+        .ui-layer.spirit-ui .spirit-footer { pointer-events: none; }
+        .ui-layer.spirit-ui .spirit-restart-btn { pointer-events: auto; }
+        .layer-2-inner {
+            display: flex; flex-direction: column; align-items: center; width: 100%;
+        }
+        .layer-2-center {
+            display: flex; flex-direction: column; align-items: center; width: 100%;
+        }
+        .instrument-hint,
+        .style-hint {
+            display: none;
+            font-size: 0.72rem; font-weight: 300; letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.55); text-align: center;
+            flex-shrink: 0; pointer-events: none;
+        }
+        .instrument-hint { margin-top: 10px; }
+        .style-hint { margin: 6px 0 10px; line-height: 1.4; }
+        html.is-mobile .instrument-hint,
+        html.is-mobile .style-hint,
+        html.is-mobile #layer-2 .instrument-hint,
+        html.is-mobile #layer-3 .style-hint {
+            display: block !important;
+            visibility: visible;
+            opacity: 1;
+        }
 
         .vibe-title {
             font-size: 3.5rem; font-weight: 200; text-transform: uppercase; letter-spacing: 8px;
@@ -94,6 +119,43 @@
         .spirit-controls {
             position: absolute; bottom: 50px; display: flex; flex-direction: column;
             align-items: center; gap: 30px; width: 100%;
+        }
+        .spirit-top {
+            position: absolute; top: 36px; left: 0; right: 0;
+            display: flex; justify-content: center; align-items: center;
+            padding: 0 16px; z-index: 3;
+        }
+        .spirit-footer {
+            position: absolute; bottom: 50px; left: 0; right: 0;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            padding: 0 16px; pointer-events: none;
+        }
+        .spirit-restart-btn { min-width: 120px; }
+        #layer-4 .spirit-top {
+            top: max(12px, env(safe-area-inset-top));
+        }
+        #layer-4 .spirit-footer {
+            bottom: max(28px, env(safe-area-inset-bottom));
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        #layer-4 .spirit-title {
+            font-size: 0.68rem; font-weight: 300; letter-spacing: 1px;
+            padding: 6px 12px; margin: 0;
+            border: 1px solid rgba(0, 255, 204, 0.18);
+            border-radius: 20px;
+            background: rgba(0, 255, 204, 0.04);
+            color: rgba(255, 255, 255, 0.42);
+            text-shadow: none;
+            text-transform: uppercase;
+            backdrop-filter: blur(6px);
+            animation: spiritWatermark 5s ease-in-out infinite;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        #layer-4 .spirit-tag {
+            font-size: 0.68rem; padding: 6px 12px; letter-spacing: 1px;
         }
         .spirit-title {
             font-size: 2rem; font-weight: 200; letter-spacing: 10px; text-transform: uppercase;
@@ -177,6 +239,19 @@
             -webkit-overflow-scrolling: touch;
             display: flex; flex-direction: column; align-items: center;
         }
+        .layer-3-spacer { display: none; }
+        .layer-3-bottom {
+            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 1200px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        #layer-3 .layer-3-bottom .style-footer {
+            position: relative; bottom: auto; left: auto; transform: none;
+        }
+        @keyframes spiritWatermark {
+            0%, 100% { opacity: 0.28; transform: translateY(0); }
+            50% { opacity: 0.48; transform: translateY(-6px); }
+        }
 
         /* ── iPhone / mobile layout (visual structure only) ── */
         @media (max-width: 768px), (hover: none) and (pointer: coarse) {
@@ -200,60 +275,141 @@
                 min-height: 48px; padding: 14px 28px; font-size: 0.85rem;
                 letter-spacing: 3px; width: auto; max-width: 90%;
             }
-            #layer-2 { justify-content: flex-start; padding-top: max(72px, calc(env(safe-area-inset-top) + 48px)); }
-            #layer-2 .subtitle { margin-top: 0; }
+            #layer-2 {
+                justify-content: flex-start; align-items: center;
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            #layer-2 .layer-2-inner {
+                position: relative; width: 100%; height: 100%;
+                justify-content: flex-start;
+            }
+            #layer-2 .subtitle {
+                position: absolute;
+                top: max(56px, calc(env(safe-area-inset-top) + 40px));
+                left: 0; right: 0; margin: 0;
+                font-size: 0.72rem; letter-spacing: 1.5px;
+            }
+            #layer-2 .layer-2-center {
+                position: absolute;
+                top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                gap: 12px; z-index: 3;
+            }
+            #layer-2 .instrument-hint {
+                display: block !important;
+                visibility: visible;
+                font-size: 0.68rem; letter-spacing: 2px;
+                color: rgba(255, 255, 255, 0.55);
+                margin-top: 10px;
+            }
             #layer-2 .card-container {
-                display: grid; grid-template-columns: 1fr 1fr;
-                gap: 14px; width: 92%; max-width: 400px; margin-bottom: 1.5rem;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
+                gap: 8px; width: 78%; max-width: 220px; margin: 0 auto;
             }
-            .vibe-card {
-                width: 100%; height: auto; min-height: 128px;
-                padding: 18px 12px; border-radius: 14px;
+            #layer-2 .vibe-card {
+                width: 100%; height: auto; min-height: 0;
+                padding: 8px 6px; border-radius: 8px;
+                aspect-ratio: 1;
             }
-            .vibe-card:active { transform: scale(0.97); border-color: rgba(255,255,255,0.5); }
-            .card-symbol { font-size: 2.2rem; margin-bottom: 10px; }
-            .card-name { font-size: 0.78rem; letter-spacing: 1px; line-height: 1.3; }
-            .drum-rings { width: 44px; height: 44px; margin-bottom: 10px; }
-            .drum-rings::before { width: 44px; height: 44px; }
-            .drum-rings::after { width: 24px; height: 24px; }
+            #layer-2 .vibe-card:active { transform: scale(0.97); border-color: rgba(255,255,255,0.5); }
+            #layer-2 .vibe-card.pressing {
+                border-color: rgba(0, 255, 204, 0.5);
+                box-shadow: 0 0 16px rgba(0, 255, 204, 0.15);
+            }
+            #layer-2 .card-symbol { font-size: 1.1rem; margin-bottom: 4px; }
+            #layer-2 .card-name { font-size: 0.52rem; letter-spacing: 0.5px; line-height: 1.2; }
+            #layer-2 .drum-rings { width: 22px; height: 22px; margin-bottom: 4px; }
+            #layer-2 .drum-rings::before { width: 22px; height: 22px; border-width: 1px; }
+            #layer-2 .drum-rings::after { width: 12px; height: 12px; border-width: 1px; }
 
             #layer-3 {
-                padding-top: max(64px, calc(env(safe-area-inset-top) + 52px));
-                padding-bottom: 0; justify-content: flex-start;
-                overflow: hidden; height: 100%;
+                padding-top: 0; padding-bottom: 0;
+                justify-content: flex-end; overflow: hidden; height: 100%;
             }
             #layer-3 .layer-3-body {
-                padding-bottom: 8px; min-height: 0; flex: 1;
+                position: absolute; top: 0; left: 0; right: 0;
+                padding-top: max(52px, calc(env(safe-area-inset-top) + 44px));
+                padding-bottom: 0; overflow: visible; flex: none; height: auto;
+            }
+            #layer-3 .layer-3-spacer { display: none; }
+            #layer-3 .layer-3-bottom {
+                position: relative; bottom: auto; left: auto; transform: none;
+                width: 100%;
+                display: flex; flex-direction: column; align-items: center;
+                padding-bottom: max(12px, env(safe-area-inset-bottom));
             }
             .back-btn {
                 top: max(10px, env(safe-area-inset-top)); left: 14px;
-                font-size: 0.72rem; letter-spacing: 1px; padding: 10px 14px;
+                font-size: 0.62rem; letter-spacing: 0.5px; padding: 6px 10px;
                 max-width: 46%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                border-radius: 14px;
             }
-            #layer-3 .subtitle { font-size: 0.88rem; padding: 0 16px; }
-            #layer-3 .card-container {
-                display: flex; flex-direction: column; gap: 12px;
-                width: 92%; max-width: 400px; margin-bottom: 1rem;
+            #layer-3 .subtitle {
+                font-size: 0.68rem; letter-spacing: 1px; padding: 0 16px;
+                margin-bottom: 0; line-height: 1.4;
+            }
+            #layer-3 .card-container,
+            #layer-3 #styles-box {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: stretch;
+                gap: 8px; width: 78%; max-width: 240px; margin-bottom: 10px;
             }
             .style-card {
-                width: 100%; height: auto; min-height: 68px;
-                padding: 18px 16px;
+                flex: 1 1 0; min-width: 0; width: auto; height: auto;
+                padding: 8px 4px; border-radius: 8px;
+                display: flex; align-items: center; justify-content: center;
+            }
+            #layer-3 #styles-box {
+                margin-bottom: 0;
+            }
+            #layer-3 .style-hint {
+                display: block !important;
+                visibility: visible;
+                font-size: 0.62rem; letter-spacing: 1.5px;
+                color: rgba(255, 255, 255, 0.55);
+                width: 78%; max-width: 240px;
+            }
+            #layer-3 .style-card.pressing {
+                border-color: rgba(0, 255, 204, 0.5);
+                box-shadow: 0 0 16px rgba(0, 255, 204, 0.15);
+            }
+            .style-card .card-name {
+                font-size: 0.48rem; letter-spacing: 0.3px; line-height: 1.2;
+                word-break: break-word; hyphens: auto;
             }
             .style-footer {
                 position: relative; bottom: auto; left: auto; transform: none;
-                width: 92%; max-width: 400px;
-                padding: 12px 0 max(24px, calc(env(safe-area-inset-bottom) + 16px));
-                margin-top: auto; flex-shrink: 0;
+                width: 78%; max-width: 240px;
+                padding: 0 0 max(8px, env(safe-area-inset-bottom));
+                margin-top: 0; flex-shrink: 0; gap: 8px;
             }
-            .generate-btn { width: 100%; min-width: 0; }
+            .progress-track { height: 3px; }
+            .progress-label { font-size: 0.62rem; letter-spacing: 1.5px; }
+            .generate-btn {
+                width: 100%; min-width: 0;
+                min-height: 36px; padding: 8px 16px;
+                font-size: 0.62rem; letter-spacing: 1.5px; border-radius: 18px;
+            }
 
-            .spirit-header {
-                top: max(36px, calc(env(safe-area-inset-top) + 24px)); gap: 12px; padding: 0 16px;
+            #layer-4 .spirit-top {
+                top: max(12px, env(safe-area-inset-top));
             }
-            .spirit-title { font-size: 1.15rem; letter-spacing: 5px; }
-            .spirit-tag { font-size: 0.68rem; padding: 6px 12px; letter-spacing: 1px; }
-            .spirit-controls {
-                bottom: max(28px, calc(env(safe-area-inset-bottom) + 12px));
+            #layer-4 .spirit-footer {
+                bottom: max(24px, calc(env(safe-area-inset-bottom) + 12px));
+                gap: 8px;
+            }
+            #layer-4 .spirit-style-tags {
+                flex-wrap: wrap; justify-content: center; gap: 6px;
+                max-width: 92%;
+            }
+            #layer-4 .spirit-restart-btn {
+                min-height: 36px; padding: 8px 20px;
+                font-size: 0.62rem; letter-spacing: 1.5px;
             }
         }
     </style>
@@ -262,38 +418,48 @@
 
     <div id="canvas-container"></div>
     <audio id="bgm-page4" class="hidden-audio" src="audio/page4-bgm.m4a" loop preload="auto" playsinline></audio>
+    <audio id="style-preview-audio" class="hidden-audio" loop preload="auto" playsinline></audio>
 
     <div id="layer-1" class="ui-layer active">
         <h1 class="vibe-title">Explore Your<br>Music Space</h1>
-        <button class="vibe-btn" onclick="navigateTo(2)">CLICK TO START</button>
+        <button class="vibe-btn" onclick="AudioEngine.unlockAudio(); navigateTo(2)">CLICK TO START</button>
     </div>
 
     <div id="layer-2" class="ui-layer">
-        <h2 class="subtitle">Choose Your Soundtrack</h2>
-        <div class="card-container" id="instruments-box"></div>
+        <div class="layer-2-inner">
+            <h2 class="subtitle">Choose Your Soundtrack</h2>
+            <div class="layer-2-center">
+                <div class="card-container" id="instruments-box"></div>
+                <p class="instrument-hint">长按图标试听</p>
+            </div>
+        </div>
     </div>
 
     <div id="layer-3" class="ui-layer">
         <button class="back-btn" onclick="backToInstruments()">返回上一页继续添加</button>
         <div class="layer-3-body">
             <h2 class="subtitle" id="style-page-subtitle">Choose Your Style</h2>
-            <div class="card-container" id="styles-box"></div>
+            <div class="layer-3-spacer"></div>
         </div>
-        <div class="style-footer">
-            <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-            <div class="progress-label" id="storage-counter">已添加 <span>0</span> / 3</div>
-            <button class="vibe-btn generate-btn" id="generate-btn" onclick="enterSpiritSpace()" disabled>生成我的空间</button>
+        <div class="layer-3-bottom">
+            <div class="card-container" id="styles-box"></div>
+            <p class="style-hint">长按试听，轻触添加</p>
+            <div class="style-footer">
+                <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+                <div class="progress-label" id="storage-counter">已添加 <span>0</span> / 3</div>
+                <button class="vibe-btn generate-btn" id="generate-btn" onclick="enterSpiritSpace()" disabled>生成我的空间</button>
+            </div>
         </div>
     </div>
 
     <div id="layer-4" class="ui-layer spirit-ui">
         <div class="spirit-loading hidden" id="spirit-loading">正在生成你的音乐空间…</div>
-        <div class="spirit-header">
-            <h1 class="spirit-title">Your Music Space</h1>
-            <div class="spirit-style-tags" id="spirit-style-tags"></div>
+        <div class="spirit-top">
+            <button class="vibe-btn spirit-restart-btn" onclick="restartProject()">Restart</button>
         </div>
-        <div class="spirit-controls">
-            <button class="vibe-btn" onclick="restartProject()">Restart</button>
+        <div class="spirit-footer">
+            <div class="spirit-style-tags" id="spirit-style-tags"></div>
+            <h1 class="spirit-title">Your Music Space</h1>
         </div>
     </div>
 
@@ -381,7 +547,6 @@
             previewNodes: [],
             drumInterval: null,
             bassInterval: null,
-            styleAudioEl: null,
             bgm: { page4: null },
             mediaConnected: {},
             currentInstrument: null,
@@ -399,10 +564,31 @@
                 this.analyser.connect(this.ctx.destination);
             },
 
-            resume() {
+            unlockAudio() {
                 this.init();
                 if (this.ctx.state === 'suspended') return this.ctx.resume();
                 return Promise.resolve();
+            },
+
+            resume() {
+                return this.unlockAudio();
+            },
+
+            _playElement(el) {
+                if (!el) return;
+                const p = el.play();
+                if (p && p.catch) {
+                    p.catch(() => {
+                        this.unlockAudio().then(() => el.play().catch(() => {}));
+                    });
+                }
+            },
+
+            _prepInlineAudio(el) {
+                if (!el) return;
+                el.setAttribute('playsinline', '');
+                el.setAttribute('webkit-playsinline', '');
+                el.playsInline = true;
             },
 
             _nativeBgm(id) {
@@ -423,11 +609,11 @@
                 const el = this._nativeBgm(elId);
                 if (!el) return;
                 el.volume = vol;
-                this.resume().then(() => {
-                    this._wireMedia(el, wireKey);
-                    const p = el.play();
-                    if (p && p.catch) p.catch(() => {});
-                });
+                this._prepInlineAudio(el);
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                if (!IS_MOBILE) this._wireMedia(el, wireKey);
+                this._playElement(el);
             },
 
             playPage4Bgm() {
@@ -472,14 +658,13 @@
                 this.stopInstrumentLoop();
                 this.stopStyleAudio();
                 this.currentInstrument = name;
-                this.resume().then(() => {
-                    if (this.currentInstrument !== name) return;
-                    const now = this.ctx.currentTime;
-                    if (name === 'Synthesizer') this._loopSynthesizer(now);
-                    else if (name === 'Electric Guitar') this._loopGuitar(now);
-                    else if (name === 'Drums') this._loopDrums(now);
-                    else if (name === 'Bass') this._loopBass(now);
-                });
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const now = this.ctx.currentTime;
+                if (name === 'Synthesizer') this._loopSynthesizer(now);
+                else if (name === 'Electric Guitar') this._loopGuitar(now);
+                else if (name === 'Drums') this._loopDrums(now);
+                else if (name === 'Bass') this._loopBass(now);
             },
 
             _loopSynthesizer(now) {
@@ -691,28 +876,33 @@
             playStyleAudio(styleName) {
                 const src = AUDIO_FILES.styles[styleName];
                 if (!src) return;
-                if (this.currentStyle === styleName && this.styleAudioEl && !this.styleAudioEl.paused) return;
-                this.stopStyleAudio();
+                const el = this._nativeBgm('style-preview-audio');
+                if (!el) return;
+                if (this.currentStyle === styleName && !el.paused) return;
                 this.stopInstrumentLoop();
-                this.resume().then(() => {
-                    if (!this.styleAudioEl) {
-                        this.styleAudioEl = new Audio();
-                        this.styleAudioEl.loop = true;
-                        this.styleAudioEl.crossOrigin = 'anonymous';
-                    }
-                    this.styleAudioEl.src = src;
-                    this.styleAudioEl.volume = 0.58;
-                    this.styleAudioEl.currentTime = 0;
-                    this._wireMedia(this.styleAudioEl, 'style');
-                    this.styleAudioEl.play().catch(() => {});
-                    this.currentStyle = styleName;
-                });
+                this._prepInlineAudio(el);
+                el.pause();
+                el.volume = 0.72;
+                el.src = src;
+                el.load();
+                this.currentStyle = styleName;
+                this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const p = el.play();
+                if (p && p.catch) {
+                    p.catch(() => {
+                        this.unlockAudio().then(() => el.play().catch(() => {}));
+                    });
+                }
             },
 
             stopStyleAudio() {
-                if (this.styleAudioEl) {
-                    this.styleAudioEl.pause();
-                    this.styleAudioEl.currentTime = 0;
+                const el = this._nativeBgm('style-preview-audio');
+                if (el) {
+                    el.pause();
+                    el.currentTime = 0;
+                    el.removeAttribute('src');
+                    el.load();
                 }
                 this.currentStyle = null;
             },
@@ -797,6 +987,23 @@
                 currentParticleSystem.material.dispose();
                 currentParticleSystem = null;
             }
+        }
+
+        function restoreStylePageVisual() {
+            if (currentLayer !== 3) return;
+            if (selectedStyles.length > 0) {
+                activateStylePreview(selectedStyles[selectedStyles.length - 1]);
+            } else {
+                buildHomeParticles();
+                activeVisualMode = 'menu';
+            }
+        }
+
+        function activateStylePreview(styleName) {
+            clearTimeout(stylePreviewTimer);
+            AudioEngine.unlockAudio();
+            AudioEngine.playStyleAudio(styleName);
+            previewStyleVisual(styleName);
         }
 
         function previewStyleVisual(styleName) {
@@ -892,7 +1099,13 @@
                         camera.position.z = 12 + Math.cos(time * 0.05) * 1;
                     }
                 } else {
-                    camera.position.set(0, 1, 14);
+                    if (IS_MOBILE) {
+                        camera.position.x = Math.sin(time * 0.04) * 1.2;
+                        camera.position.y = 1.2;
+                        camera.position.z = 14 + Math.cos(time * 0.04) * 0.5;
+                    } else {
+                        camera.position.set(0, 1, 14);
+                    }
                 }
                 camera.lookAt(0, 0, 0);
             } else {
@@ -918,6 +1131,7 @@
         }
 
         function navigateTo(layerNum) {
+            AudioEngine.unlockAudio();
             currentLayer = layerNum;
             document.querySelectorAll('.ui-layer').forEach(l => l.classList.remove('active'));
             const layer = document.getElementById(`layer-${layerNum}`);
@@ -935,14 +1149,38 @@
                 AudioEngine.stopStyleAudio();
                 renderInstrumentPage();
             } else if (layerNum === 3) {
-                activeVisualMode = 'menu';
                 AudioEngine.stopInstrumentLoop();
                 renderStylePage();
+                restoreStylePageVisual();
             } else if (layerNum === 4) {
                 activeVisualMode = 'spirit';
                 AudioEngine.stopPreview();
                 AudioEngine.playPage4Bgm();
             }
+        }
+
+        function bindInstrumentLongPress(card, name) {
+            let timer = null;
+            let holding = false;
+            card.addEventListener('touchstart', () => {
+                AudioEngine.unlockAudio();
+                timer = setTimeout(() => {
+                    holding = true;
+                    AudioEngine.startInstrumentLoop(name);
+                    card.classList.add('pressing');
+                }, 400);
+            }, { passive: true });
+            const endHold = () => {
+                clearTimeout(timer);
+                timer = null;
+                if (holding) {
+                    AudioEngine.stopInstrumentLoop();
+                    holding = false;
+                    card.classList.remove('pressing');
+                }
+            };
+            card.addEventListener('touchend', endHold);
+            card.addEventListener('touchcancel', endHold);
         }
 
         function renderInstrumentPage() {
@@ -956,12 +1194,17 @@
                     ? item.symbolHtml
                     : `<div class="card-symbol">${item.symbol}</div>`;
                 card.innerHTML = `${symbolHtml}<div class="card-name">${name}</div>`;
-                bindCardHover(
-                    card,
-                    () => AudioEngine.startInstrumentLoop(name),
-                    () => AudioEngine.stopInstrumentLoop()
-                );
+                if (IS_MOBILE) {
+                    bindInstrumentLongPress(card, name);
+                } else {
+                    bindCardHover(
+                        card,
+                        () => AudioEngine.startInstrumentLoop(name),
+                        () => AudioEngine.stopInstrumentLoop()
+                    );
+                }
                 card.onclick = () => {
+                    AudioEngine.unlockAudio();
                     selectedInstrument = name;
                     AudioEngine.stopInstrumentLoop();
                     navigateTo(3);
@@ -979,6 +1222,71 @@
             const btn = document.getElementById('generate-btn');
             btn.disabled = count < MAX_STYLES;
             btn.classList.toggle('ready', count >= MAX_STYLES);
+        }
+
+        function bindStyleCard(card, styleName) {
+            const onSelect = () => {
+                const atLimit = selectedStyles.length >= MAX_STYLES && !selectedStyles.includes(styleName);
+                if (atLimit) return;
+                AudioEngine.unlockAudio();
+                selectStyle(styleName, card);
+            };
+            if (IS_MOBILE) {
+                let pressTimer = null;
+                let longPressFired = false;
+                card.addEventListener('touchstart', () => {
+                    AudioEngine.unlockAudio();
+                    longPressFired = false;
+                    pressTimer = setTimeout(() => {
+                        longPressFired = true;
+                        activateStylePreview(styleName);
+                        card.classList.add('pressing');
+                    }, 400);
+                }, { passive: true });
+                const endTouch = (e) => {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                    if (longPressFired) {
+                        card.classList.remove('pressing');
+                        return;
+                    }
+                    const atLimit = selectedStyles.length >= MAX_STYLES && !selectedStyles.includes(styleName);
+                    if (atLimit) return;
+                    e.preventDefault();
+                    onSelect();
+                };
+                card.addEventListener('touchend', endTouch, { passive: false });
+                card.addEventListener('touchcancel', () => {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                    card.classList.remove('pressing');
+                });
+            } else {
+                bindCardHover(
+                    card,
+                    () => {
+                        const atLimit = selectedStyles.length >= MAX_STYLES && !selectedStyles.includes(styleName);
+                        if (atLimit) return;
+                        clearTimeout(stylePreviewTimer);
+                        activateStylePreview(styleName);
+                    },
+                    () => {
+                        stylePreviewTimer = setTimeout(() => {
+                            if (selectedStyles.includes(styleName)) return;
+                            if (selectedStyles.length > 0 && currentLayer === 3) {
+                                activateStylePreview(selectedStyles[selectedStyles.length - 1]);
+                                return;
+                            }
+                            AudioEngine.stopStyleAudio();
+                            if (activeVisualMode === 'preview') {
+                                buildHomeParticles();
+                                activeVisualMode = 'menu';
+                            }
+                        }, 200);
+                    }
+                );
+                card.onclick = onSelect;
+            }
         }
 
         function renderStylePage() {
@@ -1001,35 +1309,14 @@
                 card.className = `vibe-card style-card${isSelected ? ' selected' : ''}${atLimit ? ' disabled' : ''}`;
                 card.innerHTML = `<div class="card-name">${styleName}</div>`;
                 if (atLimit) card.style.opacity = '0.35';
-
-                bindCardHover(
-                    card,
-                    () => {
-                        if (atLimit) return;
-                        clearTimeout(stylePreviewTimer);
-                        AudioEngine.playStyleAudio(styleName);
-                        previewStyleVisual(styleName);
-                    },
-                    () => {
-                        stylePreviewTimer = setTimeout(() => {
-                            AudioEngine.stopStyleAudio();
-                            if (activeVisualMode !== 'spirit' && currentLayer !== 4) {
-                                buildHomeParticles();
-                                activeVisualMode = 'menu';
-                            }
-                        }, 200);
-                    }
-                );
-                card.onclick = () => {
-                    if (atLimit) return;
-                    selectStyle(styleName, card);
-                };
+                bindStyleCard(card, styleName);
                 container.appendChild(card);
             });
         }
 
         function selectStyle(styleName, card) {
-            if (selectedStyles.includes(styleName)) {
+            const wasSelected = selectedStyles.includes(styleName);
+            if (wasSelected) {
                 selectedStyles = selectedStyles.filter(s => s !== styleName);
                 card.classList.remove('selected');
             } else if (selectedStyles.length < MAX_STYLES) {
@@ -1037,9 +1324,24 @@
                 card.classList.add('selected');
             }
             updateStyleProgress();
-            renderStylePage();
-            if (selectedStyles.length >= MAX_STYLES) {
-                setTimeout(enterSpiritSpace, 500);
+            document.querySelectorAll('#styles-box .style-card').forEach(el => {
+                const name = el.querySelector('.card-name')?.textContent?.trim();
+                if (!name) return;
+                const isSelected = selectedStyles.includes(name);
+                const atLimit = selectedStyles.length >= MAX_STYLES && !isSelected;
+                el.classList.toggle('selected', isSelected);
+                el.classList.toggle('disabled', atLimit);
+                el.style.opacity = atLimit ? '0.35' : '';
+            });
+            if (selectedStyles.includes(styleName)) {
+                activateStylePreview(styleName);
+            } else if (selectedStyles.length > 0) {
+                activateStylePreview(selectedStyles[selectedStyles.length - 1]);
+            } else {
+                clearTimeout(stylePreviewTimer);
+                AudioEngine.stopStyleAudio();
+                buildHomeParticles();
+                activeVisualMode = 'menu';
             }
         }
 
@@ -1056,6 +1358,7 @@
         function enterSpiritSpace() {
             if (selectedStyles.length < MAX_STYLES || isBuildingSpirit) return;
             isBuildingSpirit = true;
+            AudioEngine.unlockAudio();
 
             clearTimeout(stylePreviewTimer);
             AudioEngine.stopStyleAudio();
@@ -1108,7 +1411,9 @@
             initRenderEngine();
             preloadAudioAssets();
             AudioEngine.init();
-            document.addEventListener('pointerdown', () => AudioEngine.resume(), { once: true });
+            const unlock = () => AudioEngine.unlockAudio();
+            document.addEventListener('pointerdown', unlock);
+            document.addEventListener('touchstart', unlock, { passive: true });
         };
     </script>
 </body>
