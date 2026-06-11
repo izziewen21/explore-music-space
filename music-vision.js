@@ -3,10 +3,17 @@
  * Ultra-fine grain · Curl Noise flow · Bioluminescent Bloom
  */
 
-// ─── Particle density (combine mode for page 4) ─────────────────
+// ─── Particle density (combine / mobile) ────────────────────────
 let _spiritCombineMode = false;
+let _mobileMode = false;
 function setSpiritCombineMode(on) { _spiritCombineMode = !!on; }
-function pc(n) { return _spiritCombineMode ? Math.max(8000, Math.floor(n * 0.32)) : n; }
+function setMobileMode(on) { _mobileMode = !!on; }
+function pc(n) {
+    let v = n;
+    if (_spiritCombineMode) v = Math.max(8000, Math.floor(n * 0.32));
+    if (_mobileMode) v = Math.max(6000, Math.floor(v * (_spiritCombineMode ? 0.72 : 0.48)));
+    return v;
+}
 
 // ─── Audio helper ───────────────────────────────────────────────
 function audioScale(audioData) {
@@ -883,6 +890,7 @@ window.MusicVision = {
     BLOOM_PROFILES,
     BloomEngine,
     setSpiritCombineMode,
+    setMobileMode,
     pc,
     createGlowParticleMaterial,
     buildGlowGeometry,
