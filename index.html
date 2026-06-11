@@ -47,19 +47,15 @@
         .layer-2-center {
             display: flex; flex-direction: column; align-items: center; width: 100%;
         }
-        .instrument-hint,
-        .style-hint {
+        .instrument-hint {
             display: none;
             font-size: 0.72rem; font-weight: 300; letter-spacing: 2px;
             color: rgba(255, 255, 255, 0.55); text-align: center;
             flex-shrink: 0; pointer-events: none;
+            margin-top: 10px;
         }
-        .instrument-hint { margin-top: 10px; }
-        .style-hint { margin: 6px 0 10px; line-height: 1.4; }
         html.is-mobile .instrument-hint,
-        html.is-mobile .style-hint,
-        html.is-mobile #layer-2 .instrument-hint,
-        html.is-mobile #layer-3 .style-hint {
+        html.is-mobile #layer-2 .instrument-hint {
             display: block !important;
             visibility: visible;
             opacity: 1;
@@ -184,12 +180,12 @@
         .spirit-loading.hidden { opacity: 0; }
         #layer-4.active { pointer-events: none; }
         .back-btn {
-            position: absolute; top: 36px; left: 36px;
+            position: absolute; top: 36px; left: 36px; z-index: 20;
             padding: 10px 22px; background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 24px;
             color: rgba(255, 255, 255, 0.75); font-size: 0.85rem; letter-spacing: 2px;
             cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px);
-            pointer-events: auto;
+            pointer-events: auto; touch-action: manipulation;
         }
         .back-btn:hover {
             color: #fff; border-color: rgba(255, 255, 255, 0.5);
@@ -238,6 +234,7 @@
             flex: 1; width: 100%; overflow-y: auto; overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             display: flex; flex-direction: column; align-items: center;
+            pointer-events: none;
         }
         .layer-3-spacer { display: none; }
         .layer-3-bottom {
@@ -333,19 +330,28 @@
                 position: absolute; top: 0; left: 0; right: 0;
                 padding-top: max(52px, calc(env(safe-area-inset-top) + 44px));
                 padding-bottom: 0; overflow: visible; flex: none; height: auto;
+                pointer-events: none; z-index: 1;
+            }
+            #layer-3 .back-btn {
+                top: max(10px, env(safe-area-inset-top)); left: 14px;
+                z-index: 30;
+                font-size: 0.72rem; letter-spacing: 1px;
+                padding: 10px 16px; min-height: 44px;
+                max-width: 72%; white-space: nowrap;
+                border-radius: 16px;
+            }
+            .back-btn {
+                top: max(10px, env(safe-area-inset-top)); left: 14px;
+                font-size: 0.72rem; letter-spacing: 1px; padding: 10px 16px;
+                min-height: 44px; max-width: 72%; white-space: nowrap;
+                border-radius: 16px;
             }
             #layer-3 .layer-3-spacer { display: none; }
             #layer-3 .layer-3-bottom {
                 position: relative; bottom: auto; left: auto; transform: none;
-                width: 100%;
+                width: 100%; z-index: 5;
                 display: flex; flex-direction: column; align-items: center;
                 padding-bottom: max(12px, env(safe-area-inset-bottom));
-            }
-            .back-btn {
-                top: max(10px, env(safe-area-inset-top)); left: 14px;
-                font-size: 0.62rem; letter-spacing: 0.5px; padding: 6px 10px;
-                max-width: 46%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                border-radius: 14px;
             }
             #layer-3 .subtitle {
                 font-size: 0.68rem; letter-spacing: 1px; padding: 0 16px;
@@ -366,13 +372,6 @@
             }
             #layer-3 #styles-box {
                 margin-bottom: 0;
-            }
-            #layer-3 .style-hint {
-                display: block !important;
-                visibility: visible;
-                font-size: 0.62rem; letter-spacing: 1.5px;
-                color: rgba(255, 255, 255, 0.55);
-                width: 78%; max-width: 240px;
             }
             #layer-3 .style-card.pressing {
                 border-color: rgba(0, 255, 204, 0.5);
@@ -436,14 +435,13 @@
     </div>
 
     <div id="layer-3" class="ui-layer">
-        <button class="back-btn" onclick="backToInstruments()">返回上一页继续添加</button>
+        <button type="button" class="back-btn" id="back-to-instruments-btn">返回上一页继续添加</button>
         <div class="layer-3-body">
             <h2 class="subtitle" id="style-page-subtitle">Choose Your Style</h2>
             <div class="layer-3-spacer"></div>
         </div>
         <div class="layer-3-bottom">
             <div class="card-container" id="styles-box"></div>
-            <p class="style-hint">长按试听，轻触添加</p>
             <div class="style-footer">
                 <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
                 <div class="progress-label" id="storage-counter">已添加 <span>0</span> / 3</div>
@@ -1414,6 +1412,13 @@
             const unlock = () => AudioEngine.unlockAudio();
             document.addEventListener('pointerdown', unlock);
             document.addEventListener('touchstart', unlock, { passive: true });
+            const backBtn = document.getElementById('back-to-instruments-btn');
+            if (backBtn) {
+                backBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    backToInstruments();
+                });
+            }
         };
     </script>
 </body>
