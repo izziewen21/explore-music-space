@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Your Music Space</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="music-vision.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html {
+            width: 100%; height: 100%; overflow: hidden;
+            background-color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #fff;
+        }
+        #canvas-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+        }
+        .ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0; transform: scale(0.95);
+        }
+        .ui-layer.active { opacity: 1; transform: scale(1); pointer-events: auto; }
+        .ui-layer.spirit-ui { pointer-events: none; background: transparent; }
+        .ui-layer.spirit-ui .spirit-controls { pointer-events: auto; }
+
+        .vibe-title {
+            font-size: 3.5rem; font-weight: 200; text-transform: uppercase; letter-spacing: 8px;
+            text-align: center; margin-bottom: 3rem; color: #ffffff;
+            text-shadow: 0 0 20px rgba(255,255,255,0.4);
+            animation: floatText 4s ease-in-out infinite;
+        }
+        @keyframes floatText {
+            0%, 100% { transform: translateY(0) scale(1); text-shadow: 0 0 20px rgba(255,255,255,0.3); }
+            50% { transform: translateY(-10px) scale(1.01); text-shadow: 0 0 35px rgba(255,255,255,0.6); }
+        }
+        .subtitle {
+            font-size: 1.5rem; font-weight: 300; letter-spacing: 4px;
+            margin-bottom: 2rem; color: #cccccc; text-align: center;
+        }
+        .vibe-btn {
+            padding: 15px 40px; background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 30px; color: #fff;
+            font-size: 1rem; letter-spacing: 4px; cursor: pointer; transition: all 0.4s ease;
+            backdrop-filter: blur(10px); box-shadow: 0 0 15px rgba(255,255,255,0.05);
+        }
+        .vibe-btn:hover {
+            background: #ffffff; color: #000000;
+            box-shadow: 0 0 30px rgba(255,255,255,0.6); transform: translateY(-2px);
+        }
+        .card-container {
+            display: flex; gap: 30px; max-width: 1200px; width: 90%;
+            justify-content: center; flex-wrap: wrap; margin-bottom: 2.5rem;
+        }
+        .vibe-card {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px; padding: 30px; width: 200px; height: 200px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            backdrop-filter: blur(15px);
+        }
+        .vibe-card:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.15); transform: translateY(-8px);
+        }
+        .vibe-card.selected {
+            border-color: #00ffcc; background: rgba(0, 255, 204, 0.05);
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
+        }
+        .card-symbol { font-size: 3rem; margin-bottom: 16px; opacity: 0.8; transition: transform 0.4s ease; }
+        .vibe-card:hover .card-symbol { transform: scale(1.15); }
+        .card-name { font-size: 1.1rem; font-weight: 400; letter-spacing: 2px; text-align: center; }
+        .style-card { width: 180px; height: 100px; }
+        .counter-badge {
+            font-size: 1.1rem; letter-spacing: 3px; color: #00ffcc;
+            text-shadow: 0 0 10px rgba(0,255,204,0.5); margin-bottom: 20px;
+        }
+        .spirit-controls {
+            position: absolute; bottom: 50px; display: flex; flex-direction: column;
+            align-items: center; gap: 30px; width: 100%;
+        }
+        .spirit-title {
+            font-size: 2rem; font-weight: 200; letter-spacing: 10px; text-transform: uppercase;
+            text-shadow: 0 0 15px rgba(0,255,204,0.4); color: #fff;
+        }
+        .spirit-header {
+            position: absolute; top: 48px; width: 100%;
+            display: flex; flex-direction: column; align-items: center; gap: 18px;
+            pointer-events: none;
+        }
+        .spirit-style-tags {
+            display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 90%;
+        }
+        .spirit-tag {
+            padding: 8px 18px; border: 1px solid rgba(0, 255, 204, 0.35);
+            border-radius: 20px; font-size: 0.8rem; letter-spacing: 2px;
+            background: rgba(0, 255, 204, 0.06); color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+        }
+        .hidden-audio { display: none; }
+        .spirit-loading {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 0.95rem; letter-spacing: 3px; color: rgba(255, 255, 255, 0.7);
+            pointer-events: none; transition: opacity 0.4s ease;
+        }
+        .spirit-loading.hidden { opacity: 0; }
+        #layer-4.active { pointer-events: none; }
+        .back-btn {
+            position: absolute; top: 36px; left: 36px;
+            padding: 10px 22px; background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 24px;
+            color: rgba(255, 255, 255, 0.75); font-size: 0.85rem; letter-spacing: 2px;
+            cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px);
+            pointer-events: auto;
+        }
+        .back-btn:hover {
+            color: #fff; border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .style-footer {
+            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; gap: 14px;
+            pointer-events: auto; width: 90%; max-width: 360px;
+        }
+        .progress-track {
+            width: 100%; height: 4px; background: rgba(255, 255, 255, 0.12);
+            border-radius: 2px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; width: 0%; background: linear-gradient(90deg, #00ffcc, #66ffe0);
+            border-radius: 2px; transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 12px rgba(0, 255, 204, 0.5);
+        }
+        .progress-label {
+            font-size: 0.95rem; letter-spacing: 3px; color: rgba(255, 255, 255, 0.6);
+        }
+        .progress-label span { color: #00ffcc; font-weight: 500; }
+        .generate-btn { min-width: 220px; }
+        .generate-btn:disabled {
+            opacity: 0.35; cursor: not-allowed; pointer-events: none;
+        }
+        .generate-btn.ready {
+            border-color: #00ffcc; box-shadow: 0 0 25px rgba(0, 255, 204, 0.25);
+        }
+        .drum-rings {
+            width: 52px; height: 52px; position: relative;
+            margin-bottom: 16px; opacity: 0.85;
+        }
+        .drum-rings::before,
+        .drum-rings::after {
+            content: ''; position: absolute; border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        .drum-rings::before { width: 52px; height: 52px; }
+        .drum-rings::after { width: 28px; height: 28px; }
+        .vibe-card:hover .drum-rings { transform: scale(1.15); transition: transform 0.4s ease; }
+        #layer-3 { justify-content: flex-start; padding-top: 100px; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <audio id="bgm-page4" class="hidden-audio" src="audio/page4-bgm.m4a" loop preload="auto" playsinline></audio>
+
+    <div id="layer-1" class="ui-layer active">
+        <h1 class="vibe-title">Explore Your<br>Music Space</h1>
+        <button class="vibe-btn" onclick="navigateTo(2)">CLICK TO START</button>
+    </div>
+
+    <div id="layer-2" class="ui-layer">
+        <h2 class="subtitle">Choose Your Soundtrack</h2>
+        <div class="card-container" id="instruments-box"></div>
+    </div>
+
+    <div id="layer-3" class="ui-layer">
+        <button class="back-btn" onclick="backToInstruments()">返回上一页继续添加</button>
+        <h2 class="subtitle" id="style-page-subtitle">Choose Your Style</h2>
+        <div class="card-container" id="styles-box"></div>
+        <div class="style-footer">
+            <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-label" id="storage-counter">已添加 <span>0</span> / 3</div>
+            <button class="vibe-btn generate-btn" id="generate-btn" onclick="enterSpiritSpace()" disabled>生成我的空间</button>
+        </div>
+    </div>
+
+    <div id="layer-4" class="ui-layer spirit-ui">
+        <div class="spirit-loading hidden" id="spirit-loading">正在生成你的音乐空间…</div>
+        <div class="spirit-header">
+            <h1 class="spirit-title">Your Music Space</h1>
+            <div class="spirit-style-tags" id="spirit-style-tags"></div>
+        </div>
+        <div class="spirit-controls">
+            <button class="vibe-btn" onclick="restartProject()">Restart</button>
+        </div>
+    </div>
+
+    <script>
+        const INSTRUMENTS = {
+            Synthesizer:    { symbol: '∿', type: 'square',    freqs: [220, 440, 660] },
+            'Electric Guitar': { symbol: '⚡', type: 'sawtooth', freqs: [220, 330, 440] },
+            Drums:          { symbolHtml: '<div class="drum-rings"></div>', isDrum: true },
+            Bass:           { symbol: '▲', type: 'sine',      freqs: [55, 82, 110] }
+        };
+
+        const INSTRUMENT_STYLES = {
+            'Synthesizer':     ['Shoegaze', 'Psychedelic Rock'],
+            'Electric Guitar': ['Dream Pop', 'Math Rock'],
+            'Drums':           ['Post-Punk', 'Post-Rock'],
+            'Bass':            ['Noise Rock', 'Britpop']
+        };
+
+        const MAX_STYLES = 3;
+
+        const SPIRIT_LAYER_LAYOUT = [
+            { scale: 1.0,  x: 0,    y: 0,    z: 0 },
+            { scale: 0.88, x: -3.5, y: 0.4,  z: -0.5 },
+            { scale: 0.76, x: 3.5,  y: -0.4, z: 0.5 }
+        ];
+
+        const AUDIO_FILES = {
+            page4: 'audio/page4-bgm.m4a',
+            styles: {
+                'Shoegaze': 'audio/Shoegaze.m4a',
+                'Psychedelic Rock': 'audio/Psychedelic-Rock.m4a',
+                'Dream Pop': 'audio/Dream-Pop.m4a',
+                'Math Rock': 'audio/Math-Rock.m4a',
+                'Post-Punk': 'audio/Post-Punk.m4a',
+                'Post-Rock': 'audio/Post-Rock.m4a',
+                'Noise Rock': 'audio/Noise-Rock.m4a',
+                'Britpop': 'audio/Britpop.m4a'
+            }
+        };
+
+        let selectedInstrument = null;
+        let selectedStyles = [];
+        let spiritComponents = [];
+        let activeVisualMode = 'home';
+        let currentLayer = 1;
+        let isBuildingSpirit = false;
+        let scene, camera, renderer, currentParticleSystem = null;
+        let stylePreviewTimer = null;
+        let useBloom = false;
+
+        const AudioEngine = {
+            ctx: null,
+            masterGain: null,
+            analyser: null,
+            dataArray: null,
+            previewNodes: [],
+            drumInterval: null,
+            bassInterval: null,
+            styleAudioEl: null,
+            bgm: { page4: null },
+            mediaConnected: {},
+            currentInstrument: null,
+            currentStyle: null,
+
+            init() {
+                if (this.ctx) return;
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
+                this.analyser = this.ctx.createAnalyser();
+                this.analyser.fftSize = 256;
+                this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                this.masterGain.connect(this.analyser);
+                this.analyser.connect(this.ctx.destination);
+            },
+
+            resume() {
+                this.init();
+                if (this.ctx.state === 'suspended') return this.ctx.resume();
+                return Promise.resolve();
+            },
+
+            _nativeBgm(id) {
+                return document.getElementById(id);
+            },
+
+            _wireMedia(el, key) {
+                if (!el || this.mediaConnected[key]) return;
+                this.init();
+                try {
+                    const src = this.ctx.createMediaElementSource(el);
+                    src.connect(this.masterGain);
+                    this.mediaConnected[key] = true;
+                } catch (e) { /* already wired */ }
+            },
+
+            _playNativeBgm(elId, wireKey, vol) {
+                const el = this._nativeBgm(elId);
+                if (!el) return;
+                el.volume = vol;
+                this.resume().then(() => {
+                    this._wireMedia(el, wireKey);
+                    const p = el.play();
+                    if (p && p.catch) p.catch(() => {});
+                });
+            },
+
+            playPage4Bgm() {
+                this.stopInstrumentLoop();
+                this.stopStyleAudio();
+                this._playNativeBgm('bgm-page4', 'page4', 0.48);
+            },
+
+            stopPage4Bgm() {
+                const el = this._nativeBgm('bgm-page4');
+                if (el) { el.pause(); el.currentTime = 0; }
+            },
+
+            stopAllBgm() {
+                this.stopPage4Bgm();
+            },
+
+            _pushNode(node) {
+                this.previewNodes.push(node);
+                return node;
+            },
+
+            stopInstrumentLoop() {
+                this.previewNodes.forEach(n => {
+                    try { if (n.stop) n.stop(0); } catch (e) {}
+                    try { n.disconnect(); } catch (e) {}
+                });
+                this.previewNodes = [];
+                if (this.drumInterval) {
+                    clearInterval(this.drumInterval);
+                    this.drumInterval = null;
+                }
+                if (this.bassInterval) {
+                    clearInterval(this.bassInterval);
+                    this.bassInterval = null;
+                }
+                this.currentInstrument = null;
+            },
+
+            startInstrumentLoop(name) {
+                if (this.currentInstrument === name) return;
+                this.stopInstrumentLoop();
+                this.stopStyleAudio();
+                this.currentInstrument = name;
+                this.resume().then(() => {
+                    if (this.currentInstrument !== name) return;
+                    const now = this.ctx.currentTime;
+                    if (name === 'Synthesizer') this._loopSynthesizer(now);
+                    else if (name === 'Electric Guitar') this._loopGuitar(now);
+                    else if (name === 'Drums') this._loopDrums(now);
+                    else if (name === 'Bass') this._loopBass(now);
+                });
+            },
+
+            _loopSynthesizer(now) {
+                const filter = this._pushNode(this.ctx.createBiquadFilter());
+                filter.type = 'lowpass';
+                filter.frequency.value = 2400;
+                filter.Q.value = 1.2;
+                filter.connect(this.masterGain);
+
+                [220, 277.18, 329.63, 440].forEach(f => {
+                    const osc = this._pushNode(this.ctx.createOscillator());
+                    const gain = this._pushNode(this.ctx.createGain());
+                    osc.type = 'square';
+                    osc.frequency.value = f;
+                    gain.gain.value = 0.028;
+                    osc.connect(gain);
+                    gain.connect(filter);
+                    osc.start(now);
+                });
+
+                const lfo = this._pushNode(this.ctx.createOscillator());
+                const lfoGain = this._pushNode(this.ctx.createGain());
+                lfo.type = 'sine';
+                lfo.frequency.value = 0.35;
+                lfoGain.gain.value = 900;
+                lfo.connect(lfoGain);
+                lfoGain.connect(filter.frequency);
+                lfo.start(now);
+            },
+
+            _loopGuitar(now) {
+                const filter = this._pushNode(this.ctx.createBiquadFilter());
+                filter.type = 'lowpass';
+                filter.frequency.value = 1400;
+                filter.Q.value = 2.5;
+
+                const bus = this._pushNode(this.ctx.createGain());
+                bus.gain.value = 0.06;
+                filter.connect(bus);
+                bus.connect(this.masterGain);
+
+                [110, 164.81].forEach(f => {
+                    const osc = this._pushNode(this.ctx.createOscillator());
+                    const gain = this._pushNode(this.ctx.createGain());
+                    osc.type = 'sawtooth';
+                    osc.frequency.value = f;
+                    gain.gain.value = 0.55;
+                    osc.connect(gain);
+                    gain.connect(filter);
+                    osc.start(now);
+                });
+
+                const trem = this._pushNode(this.ctx.createOscillator());
+                const tremGain = this._pushNode(this.ctx.createGain());
+                trem.type = 'sine';
+                trem.frequency.value = 5.5;
+                tremGain.gain.value = 0.035;
+                trem.connect(tremGain);
+                tremGain.connect(bus.gain);
+                trem.start(now);
+            },
+
+            _loopBass(now) {
+                const filter = this._pushNode(this.ctx.createBiquadFilter());
+                filter.type = 'lowpass';
+                filter.frequency.value = 1200;
+                filter.Q.value = 2.8;
+
+                const drive = this._pushNode(this.ctx.createGain());
+                drive.gain.value = 0.55;
+                filter.connect(drive);
+                drive.connect(this.masterGain);
+
+                const body = this._pushNode(this.ctx.createOscillator());
+                const bodyG = this._pushNode(this.ctx.createGain());
+                body.type = 'sine';
+                body.frequency.value = 110;
+                bodyG.gain.value = 0.12;
+                body.connect(bodyG);
+                bodyG.connect(drive);
+                body.start(now);
+
+                const root = this._pushNode(this.ctx.createOscillator());
+                const rootG = this._pushNode(this.ctx.createGain());
+                root.type = 'sawtooth';
+                root.frequency.value = 55;
+                rootG.gain.value = 0.001;
+                root.connect(rootG);
+                rootG.connect(filter);
+                root.start(now);
+
+                const harmonic = this._pushNode(this.ctx.createOscillator());
+                const harmG = this._pushNode(this.ctx.createGain());
+                harmonic.type = 'square';
+                harmonic.frequency.value = 110;
+                harmG.gain.value = 0.001;
+                harmonic.connect(harmG);
+                harmG.connect(filter);
+                harmonic.start(now);
+
+                const notes = [55, 55, 82.41, 73.42, 55, 82.41, 110, 82.41];
+                const pluck = (t, freq, accent) => {
+                    root.frequency.setValueAtTime(freq, t);
+                    harmonic.frequency.setValueAtTime(freq * 2, t);
+                    body.frequency.setValueAtTime(Math.max(freq, 82), t);
+
+                    const peak = accent ? 0.42 : 0.3;
+                    rootG.gain.cancelScheduledValues(t);
+                    rootG.gain.setValueAtTime(0.001, t);
+                    rootG.gain.linearRampToValueAtTime(peak, t + 0.015);
+                    rootG.gain.exponentialRampToValueAtTime(0.06, t + 0.18);
+                    rootG.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
+
+                    harmG.gain.cancelScheduledValues(t);
+                    harmG.gain.setValueAtTime(0.001, t);
+                    harmG.gain.linearRampToValueAtTime(peak * 0.35, t + 0.012);
+                    harmG.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+
+                    bodyG.gain.cancelScheduledValues(t);
+                    bodyG.gain.setValueAtTime(0.04, t);
+                    bodyG.gain.linearRampToValueAtTime(0.16, t + 0.02);
+                    bodyG.gain.exponentialRampToValueAtTime(0.05, t + 0.35);
+                };
+
+                const bar = () => {
+                    const t0 = this.ctx.currentTime;
+                    notes.forEach((freq, i) => pluck(t0 + i * 0.42, freq, i % 4 === 0));
+                };
+
+                bar();
+                this.bassInterval = setInterval(bar, notes.length * 420);
+            },
+
+            _loopDrums(now) {
+                const kick = this._pushNode(this.ctx.createOscillator());
+                const kickG = this._pushNode(this.ctx.createGain());
+                kick.type = 'sine';
+                kick.frequency.value = 55;
+                kickG.gain.value = 0;
+                kick.connect(kickG);
+                kickG.connect(this.masterGain);
+                kick.start(now);
+
+                const snare = this._pushNode(this.ctx.createOscillator());
+                const snareG = this._pushNode(this.ctx.createGain());
+                snare.type = 'triangle';
+                snare.frequency.value = 200;
+                snareG.gain.value = 0;
+                snare.connect(snareG);
+                snareG.connect(this.masterGain);
+                snare.start(now);
+
+                const hat = this._pushNode(this.ctx.createOscillator());
+                const hatG = this._pushNode(this.ctx.createGain());
+                hat.type = 'square';
+                hat.frequency.value = 400;
+                hatG.gain.value = 0;
+                hat.connect(hatG);
+                hatG.connect(this.masterGain);
+                hat.start(now);
+
+                const tom = this._pushNode(this.ctx.createOscillator());
+                const tomG = this._pushNode(this.ctx.createGain());
+                tom.type = 'sine';
+                tom.frequency.value = 120;
+                tomG.gain.value = 0;
+                tom.connect(tomG);
+                tomG.connect(this.masterGain);
+                tom.start(now);
+
+                const pulse = (t) => {
+                    kickG.gain.cancelScheduledValues(t);
+                    kick.frequency.cancelScheduledValues(t);
+                    kickG.gain.setValueAtTime(0.001, t);
+                    kickG.gain.linearRampToValueAtTime(0.85, t + 0.008);
+                    kickG.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+                    kick.frequency.setValueAtTime(160, t);
+                    kick.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+
+                    snareG.gain.cancelScheduledValues(t);
+                    snare.frequency.cancelScheduledValues(t);
+                    snareG.gain.setValueAtTime(0.001, t + 0.5);
+                    snareG.gain.linearRampToValueAtTime(0.45, t + 0.508);
+                    snareG.gain.exponentialRampToValueAtTime(0.001, t + 0.62);
+                    snare.frequency.setValueAtTime(240, t + 0.5);
+                    snare.frequency.exponentialRampToValueAtTime(90, t + 0.58);
+
+                    hatG.gain.cancelScheduledValues(t);
+                    hatG.gain.setValueAtTime(0.001, t + 0.25);
+                    hatG.gain.linearRampToValueAtTime(0.12, t + 0.252);
+                    hatG.gain.exponentialRampToValueAtTime(0.001, t + 0.29);
+                    hatG.gain.setValueAtTime(0.001, t + 0.75);
+                    hatG.gain.linearRampToValueAtTime(0.1, t + 0.752);
+                    hatG.gain.exponentialRampToValueAtTime(0.001, t + 0.79);
+
+                    tomG.gain.cancelScheduledValues(t);
+                    tom.frequency.cancelScheduledValues(t);
+                    tomG.gain.setValueAtTime(0.001, t + 0.25);
+                    tomG.gain.linearRampToValueAtTime(0.35, t + 0.258);
+                    tomG.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                    tom.frequency.setValueAtTime(180, t + 0.25);
+                    tom.frequency.exponentialRampToValueAtTime(70, t + 0.35);
+                };
+
+                pulse(now);
+                this.drumInterval = setInterval(() => pulse(this.ctx.currentTime), 1000);
+            },
+
+            playStyleAudio(styleName) {
+                const src = AUDIO_FILES.styles[styleName];
+                if (!src) return;
+                if (this.currentStyle === styleName && this.styleAudioEl && !this.styleAudioEl.paused) return;
+                this.stopStyleAudio();
+                this.stopInstrumentLoop();
+                this.resume().then(() => {
+                    if (!this.styleAudioEl) {
+                        this.styleAudioEl = new Audio();
+                        this.styleAudioEl.loop = true;
+                        this.styleAudioEl.crossOrigin = 'anonymous';
+                    }
+                    this.styleAudioEl.src = src;
+                    this.styleAudioEl.volume = 0.58;
+                    this.styleAudioEl.currentTime = 0;
+                    this._wireMedia(this.styleAudioEl, 'style');
+                    this.styleAudioEl.play().catch(() => {});
+                    this.currentStyle = styleName;
+                });
+            },
+
+            stopStyleAudio() {
+                if (this.styleAudioEl) {
+                    this.styleAudioEl.pause();
+                    this.styleAudioEl.currentTime = 0;
+                }
+                this.currentStyle = null;
+            },
+
+            stopPreview() {
+                this.stopInstrumentLoop();
+                this.stopStyleAudio();
+            },
+
+            stopAll() {
+                this.stopPreview();
+                this.stopAllBgm();
+            },
+
+            getAudioData() {
+                if (!this.analyser) return { volume: 0.5, bass: 0.3, treble: 0.2 };
+                this.analyser.getByteFrequencyData(this.dataArray);
+                let bass = 0, treble = 0, volume = 0;
+                const len = this.dataArray.length;
+                for (let i = 0; i < len; i++) {
+                    volume += this.dataArray[i];
+                    if (i < len * 0.15) bass += this.dataArray[i];
+                    if (i > len * 0.6) treble += this.dataArray[i];
+                }
+                return {
+                    volume: volume / len / 255,
+                    bass: bass / (len * 0.15) / 255,
+                    treble: treble / (len * 0.4) / 255
+                };
+            }
+        };
+
+        function initRenderEngine() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.015);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 2, 12);
+            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+            useBloom = BloomEngine.init(renderer, scene, camera);
+            buildHomeParticles();
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function buildHomeParticles() {
+            clearSpiritComponents();
+            if (currentParticleSystem) scene.remove(currentParticleSystem);
+            const geometry = new THREE.BufferGeometry();
+            const count = 8000;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            for (let i = 0; i < count; i++) {
+                const u = Math.random();
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(Math.random() * 2 - 1);
+                const r = 350 * Math.cbrt(u);
+                positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = r * Math.cos(phi);
+                colors[i * 3] = colors[i * 3 + 1] = 0.5 + Math.random() * 0.5;
+                colors[i * 3 + 2] = 0.8;
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            currentParticleSystem = new THREE.Points(geometry, new THREE.PointsMaterial({
+                size: 2.0, vertexColors: true, transparent: true, opacity: 0.6,
+                blending: THREE.AdditiveBlending, depthWrite: false
+            }));
+            scene.add(currentParticleSystem);
+        }
+
+        function clearSpiritComponents() {
+            spiritComponents.forEach(c => c.destroy(scene));
+            spiritComponents = [];
+            if (currentParticleSystem) {
+                scene.remove(currentParticleSystem);
+                currentParticleSystem.geometry.dispose();
+                currentParticleSystem.material.dispose();
+                currentParticleSystem = null;
+            }
+        }
+
+        function previewStyleVisual(styleName) {
+            const ComponentClass = STYLE_COMPONENTS[styleName];
+            if (!ComponentClass || activeVisualMode === 'spirit') return;
+            clearSpiritComponents();
+            activeVisualMode = 'preview';
+            const instance = new ComponentClass(scene);
+            spiritComponents.push(instance);
+            if (BLOOM_PROFILES[styleName]) BloomEngine.setSceneProfile(BLOOM_PROFILES[styleName]);
+        }
+
+        function getCombinedBloomProfile(styles) {
+            let s = 0, r = 0, t = 0, n = 0;
+            styles.forEach(name => {
+                const p = BLOOM_PROFILES[name];
+                if (!p) return;
+                s += p.strength; r += p.radius; t += p.threshold; n++;
+            });
+            if (!n) return { strength: 1.4, radius: 0.5, threshold: 0.12 };
+            return { strength: s / n, radius: r / n, threshold: t / n * 0.92 };
+        }
+
+        function renderSpiritTags() {
+            const box = document.getElementById('spirit-style-tags');
+            if (!box) return;
+            box.innerHTML = selectedStyles.map(name =>
+                `<span class="spirit-tag">${name}</span>`
+            ).join('');
+        }
+
+        function showSpiritLoading(show) {
+            const el = document.getElementById('spirit-loading');
+            if (el) el.classList.toggle('hidden', !show);
+        }
+
+        function buildSpiritSpace() {
+            if (!selectedStyles.length) return false;
+
+            clearSpiritComponents();
+            activeVisualMode = 'spirit';
+            camera.position.set(0, 2, 12);
+            scene.fog = new THREE.FogExp2(0x000000, 0.025);
+
+            let built = 0;
+            selectedStyles.forEach((styleName, index) => {
+                const ComponentClass = STYLE_COMPONENTS[styleName];
+                if (!ComponentClass) {
+                    console.error('Missing visual component for:', styleName);
+                    return;
+                }
+                try {
+                    const instance = new ComponentClass(scene);
+                    const layout = SPIRIT_LAYER_LAYOUT[index] || SPIRIT_LAYER_LAYOUT[0];
+                    const meshes = instance.meshes || [instance.mesh];
+                    meshes.forEach(mesh => {
+                        mesh.scale.setScalar(layout.scale);
+                        mesh.position.set(layout.x, layout.y, layout.z);
+                    });
+                    spiritComponents.push(instance);
+                    built++;
+                } catch (err) {
+                    console.error('Failed to build component:', styleName, err);
+                }
+            });
+
+            if (built === 0) return false;
+
+            if (useBloom) BloomEngine.setSceneProfile(getCombinedBloomProfile(selectedStyles));
+            renderSpiritTags();
+            return true;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = Date.now() * 0.001;
+            const audioData = AudioEngine.getAudioData();
+
+            if (activeVisualMode === 'home' && currentParticleSystem) {
+                currentParticleSystem.rotation.y = time * 0.05;
+            }
+
+            if ((activeVisualMode === 'spirit' || activeVisualMode === 'preview') && spiritComponents.length > 0) {
+                spiritComponents.forEach(c => c.update(time, audioData));
+                if (activeVisualMode === 'spirit') {
+                    camera.position.x = Math.sin(time * 0.05) * 3;
+                    camera.position.z = 12 + Math.cos(time * 0.05) * 1;
+                } else {
+                    camera.position.set(0, 1, 14);
+                }
+                camera.lookAt(0, 0, 0);
+            } else {
+                camera.position.set(0, 2, 12);
+                camera.lookAt(0, 0, 0);
+            }
+
+            if (useBloom && (activeVisualMode === 'spirit' || activeVisualMode === 'preview')) {
+                BloomEngine.render();
+            } else {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            if (useBloom) BloomEngine.resize(window.innerWidth, window.innerHeight);
+        }
+
+        function navigateTo(layerNum) {
+            currentLayer = layerNum;
+            document.querySelectorAll('.ui-layer').forEach(l => l.classList.remove('active'));
+            const layer = document.getElementById(`layer-${layerNum}`);
+            if (!layer) return;
+            layer.classList.add('active');
+
+            if (layerNum === 1) {
+                activeVisualMode = 'home';
+                if (typeof setSpiritCombineMode === 'function') setSpiritCombineMode(false);
+                buildHomeParticles();
+                AudioEngine.stopPreview();
+            } else if (layerNum === 2) {
+                activeVisualMode = 'menu';
+                AudioEngine.stopPage4Bgm();
+                AudioEngine.stopStyleAudio();
+                renderInstrumentPage();
+            } else if (layerNum === 3) {
+                activeVisualMode = 'menu';
+                AudioEngine.stopInstrumentLoop();
+                renderStylePage();
+            } else if (layerNum === 4) {
+                activeVisualMode = 'spirit';
+                AudioEngine.stopPreview();
+                AudioEngine.playPage4Bgm();
+            }
+        }
+
+        function renderInstrumentPage() {
+            const container = document.getElementById('instruments-box');
+            container.innerHTML = '';
+            Object.keys(INSTRUMENTS).forEach(name => {
+                const item = INSTRUMENTS[name];
+                const card = document.createElement('div');
+                card.className = 'vibe-card';
+                const symbolHtml = item.symbolHtml
+                    ? item.symbolHtml
+                    : `<div class="card-symbol">${item.symbol}</div>`;
+                card.innerHTML = `${symbolHtml}<div class="card-name">${name}</div>`;
+                card.addEventListener('mouseenter', () => AudioEngine.startInstrumentLoop(name));
+                card.addEventListener('mouseleave', () => AudioEngine.stopInstrumentLoop());
+                card.onclick = () => {
+                    selectedInstrument = name;
+                    AudioEngine.stopInstrumentLoop();
+                    navigateTo(3);
+                };
+                container.appendChild(card);
+            });
+        }
+
+        function updateStyleProgress() {
+            const count = selectedStyles.length;
+            const pct = (count / MAX_STYLES) * 100;
+            document.getElementById('progress-fill').style.width = `${pct}%`;
+            document.getElementById('storage-counter').innerHTML =
+                `已添加 <span>${count}</span> / ${MAX_STYLES}`;
+            const btn = document.getElementById('generate-btn');
+            btn.disabled = count < MAX_STYLES;
+            btn.classList.toggle('ready', count >= MAX_STYLES);
+        }
+
+        function renderStylePage() {
+            if (!selectedInstrument) {
+                navigateTo(2);
+                return;
+            }
+            const styles = INSTRUMENT_STYLES[selectedInstrument] || [];
+            document.getElementById('style-page-subtitle').innerText =
+                `Choose Your Style — ${selectedInstrument}`;
+            updateStyleProgress();
+
+            const container = document.getElementById('styles-box');
+            container.innerHTML = '';
+
+            styles.forEach(styleName => {
+                const isSelected = selectedStyles.includes(styleName);
+                const atLimit = selectedStyles.length >= MAX_STYLES && !isSelected;
+                const card = document.createElement('div');
+                card.className = `vibe-card style-card${isSelected ? ' selected' : ''}${atLimit ? ' disabled' : ''}`;
+                card.innerHTML = `<div class="card-name">${styleName}</div>`;
+                if (atLimit) card.style.opacity = '0.35';
+
+                card.addEventListener('mouseenter', () => {
+                    if (atLimit) return;
+                    clearTimeout(stylePreviewTimer);
+                    AudioEngine.playStyleAudio(styleName);
+                    previewStyleVisual(styleName);
+                });
+                card.addEventListener('mouseleave', () => {
+                    stylePreviewTimer = setTimeout(() => {
+                        AudioEngine.stopStyleAudio();
+                        if (activeVisualMode !== 'spirit' && currentLayer !== 4) {
+                            buildHomeParticles();
+                            activeVisualMode = 'menu';
+                        }
+                    }, 200);
+                });
+                card.onclick = () => {
+                    if (atLimit) return;
+                    selectStyle(styleName, card);
+                };
+                container.appendChild(card);
+            });
+        }
+
+        function selectStyle(styleName, card) {
+            if (selectedStyles.includes(styleName)) {
+                selectedStyles = selectedStyles.filter(s => s !== styleName);
+                card.classList.remove('selected');
+            } else if (selectedStyles.length < MAX_STYLES) {
+                selectedStyles.push(styleName);
+                card.classList.add('selected');
+            }
+            updateStyleProgress();
+            renderStylePage();
+            if (selectedStyles.length >= MAX_STYLES) {
+                setTimeout(enterSpiritSpace, 500);
+            }
+        }
+
+        function backToInstruments() {
+            AudioEngine.stopStyleAudio();
+            clearTimeout(stylePreviewTimer);
+            if (activeVisualMode === 'preview') {
+                buildHomeParticles();
+                activeVisualMode = 'menu';
+            }
+            navigateTo(2);
+        }
+
+        function enterSpiritSpace() {
+            if (selectedStyles.length < MAX_STYLES || isBuildingSpirit) return;
+            isBuildingSpirit = true;
+
+            clearTimeout(stylePreviewTimer);
+            AudioEngine.stopStyleAudio();
+            AudioEngine.stopInstrumentLoop();
+
+            renderSpiritTags();
+            showSpiritLoading(true);
+            navigateTo(4);
+
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    if (typeof setSpiritCombineMode === 'function') setSpiritCombineMode(true);
+                    const ok = buildSpiritSpace();
+                    showSpiritLoading(false);
+                    isBuildingSpirit = false;
+                    if (!ok) {
+                        alert('视觉生成失败，请重试或更换音乐类型组合。');
+                        navigateTo(3);
+                    }
+                }, 80);
+            });
+        }
+
+        function restartProject() {
+            isBuildingSpirit = false;
+            if (typeof setSpiritCombineMode === 'function') setSpiritCombineMode(false);
+            AudioEngine.stopAll();
+            AudioEngine.stopPreview();
+            clearSpiritComponents();
+            showSpiritLoading(false);
+            selectedInstrument = null;
+            selectedStyles = [];
+            activeVisualMode = 'home';
+            updateStyleProgress();
+            navigateTo(1);
+        }
+
+        function preloadAudioAssets() {
+            const urls = [...Object.values(AUDIO_FILES.styles)];
+            urls.forEach(src => {
+                const a = new Audio();
+                a.preload = 'auto';
+                a.src = src;
+                a.load();
+            });
+        }
+
+        window.onload = () => {
+            initRenderEngine();
+            preloadAudioAssets();
+            AudioEngine.init();
+            document.addEventListener('pointerdown', () => AudioEngine.resume(), { once: true });
+        };
+    </script>
+</body>
+</html>
